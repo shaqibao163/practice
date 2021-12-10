@@ -4,7 +4,7 @@
  * @Author: bclz
  * @Date: 2021-12-10 09:05:24
  * @LastEditors: bclz
- * @LastEditTime: 2021-12-10 11:17:30
+ * @LastEditTime: 2021-12-10 17:19:57
  */
 
 import { Graph, Shape, Addon, ToolsView, Point, EdgeView } from "@antv/x6";
@@ -143,7 +143,7 @@ const initializeX6Graph = () => {
   return new Graph({
     container: document.getElementById("graph-container")!,
     grid: true,
-    history:true,
+    history: true,
     mousewheel: {
       enabled: true,
       zoomAtMousePosition: true,
@@ -236,16 +236,14 @@ const initializeStencil = (graph: any) => {
       columnWidth: 85,
       rowHeight: 55,
     },
-  },
-  );
+  });
   document.getElementById("stencil")!.appendChild(stencil.container);
   return stencil;
 };
 
 // 初始化鼠标/键盘事件
 const initializeMouseEvent = (graph: any) => {
-
-    // 复制
+  // 复制
   graph.bindKey(["meta+c", "ctrl+c"], () => {
     const cells = graph.getSelectedCells();
     if (cells.length) {
@@ -282,12 +280,12 @@ const initializeMouseEvent = (graph: any) => {
   });
 
   // 重做
-//   graph.bindKey(["meta+shift+z", "ctrl+shift+z"], () => {
-//     if (graph.history.canRedo()) {
-//       graph.history.redo();
-//     }
-//     return false;
-//   });
+  //   graph.bindKey(["meta+shift+z", "ctrl+shift+z"], () => {
+  //     if (graph.history.canRedo()) {
+  //       graph.history.redo();
+  //     }
+  //     return false;
+  //   });
 
   // select all
   graph.bindKey(["meta+a", "ctrl+a"], () => {
@@ -336,102 +334,22 @@ const initializeMouseEvent = (graph: any) => {
 
 // 渲染画布
 export const getX6Render = () => {
-    
   const graph: any = initializeX6Graph();
 
   const stencil: any = initializeStencil(graph);
 
   initializeMouseEvent(graph);
 
-  const ports = {
-    groups: {
-      top: {
-        position: "top",
-        attrs: {
-          circle: {
-            r: 4,
-            magnet: true,
-            stroke: "#5F95FF",
-            strokeWidth: 1,
-            fill: "#fff",
-            style: {
-              visibility: "hidden",
-            },
-          },
-        },
-      },
-      right: {
-        position: "right",
-        attrs: {
-          circle: {
-            r: 4,
-            magnet: true,
-            stroke: "#5F95FF",
-            strokeWidth: 1,
-            fill: "#fff",
-            style: {
-              visibility: "hidden",
-            },
-          },
-        },
-      },
-      bottom: {
-        position: "bottom",
-        attrs: {
-          circle: {
-            r: 4,
-            magnet: true,
-            stroke: "#5F95FF",
-            strokeWidth: 1,
-            fill: "#fff",
-            style: {
-              visibility: "hidden",
-            },
-          },
-        },
-      },
-      left: {
-        position: "left",
-        attrs: {
-          circle: {
-            r: 4,
-            magnet: true,
-            stroke: "#5F95FF",
-            strokeWidth: 1,
-            fill: "#fff",
-            style: {
-              visibility: "hidden",
-            },
-          },
-        },
-      },
-    },
-    items: [
-      {
-        group: "top",
-      },
-      {
-        group: "right",
-      },
-      {
-        group: "bottom",
-      },
-      {
-        group: "left",
-      },
-    ],
-  };
-
+  // 可编辑文本元件
   const textNode = graph.createNode({
     width: 100,
     height: 40,
     data: {
-      name: "",
+      typeName: "文本",
+      type: "textNode",
+      name: "元件名称",
     },
     attrs: {
-      data: {
-        name: "",
-      },
       body: {
         stroke: "rgba(0,0,0,0.2)",
         fill: "transparent",
@@ -445,49 +363,35 @@ export const getX6Render = () => {
       },
     },
   });
-  stencil.load([textNode,textNode,textNode], "group1");
+
+  stencil.load([textNode], "group1");
 
   const imageShapes = [
     {
       label: "self",
       image: pipelineCross,
       data: {
+        typeName: "图片",
+        type: "imgNode",
         name: "交叉管道",
-        content: "",
-      },
-      text: {
-        textWrap: {
-          text: "交叉管道",
-          width: -10,
-        },
       },
     },
     {
       label: "self",
       image: pipelineRevolve,
       data: {
+        typeName: "图片",
+        type: "imgNode",
         name: "旋转管道",
-        content: "",
-      },
-      text: {
-        textWrap: {
-          text: "旋转管道",
-          width: -10,
-        },
       },
     },
     {
       label: "self",
       image: pipelineTransverse,
       data: {
+        typeName: "图片",
+        type: "imgNode",
         name: "横向管道",
-        content: "",
-      },
-      text: {
-        textWrap: {
-          text: "横向管道",
-          width: -10,
-        },
       },
     },
   ];
@@ -517,9 +421,9 @@ export const getX6Render = () => {
   const imageNodes = imageShapes.map((item) =>
     graph.createNode({
       shape: "custom-image",
-      label: item.label,
+      //   label: item.label,
+      data: item.data,
       attrs: {
-        data: item.data,
         image: {
           "xlink:href": item.image,
         },
