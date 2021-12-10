@@ -4,7 +4,7 @@
  * @Author: bclz
  * @Date: 2021-12-10 09:05:24
  * @LastEditors: bclz
- * @LastEditTime: 2021-12-10 09:49:28
+ * @LastEditTime: 2021-12-10 11:17:30
  */
 
 import { Graph, Shape, Addon, ToolsView, Point, EdgeView } from "@antv/x6";
@@ -137,12 +137,13 @@ export interface EditableCellToolOptions extends ToolsView.ToolItem.Options {
   y: number;
 }
 
-// 初始化画布
+// 创建画布
 const initializeX6Graph = () => {
   Graph.registerNodeTool("editableCell", EditableCellTool, true);
   return new Graph({
     container: document.getElementById("graph-container")!,
     grid: true,
+    history:true,
     mousewheel: {
       enabled: true,
       zoomAtMousePosition: true,
@@ -208,21 +209,21 @@ const initializeX6Graph = () => {
   });
 };
 
-// 初始化左侧工具栏
+// 创建左侧工具栏
 const initializeStencil = (graph: any) => {
   const stencil = new Addon.Stencil({
     title: "流程图",
     target: graph,
-    stencilGraphWidth: 200,
+    stencilGraphWidth: 280,
     stencilGraphHeight: 180,
     collapsable: true,
     groups: [
       {
-        title: "基础流程图",
+        title: "系统原件",
         name: "group1",
       },
       {
-        title: "系统设计图",
+        title: "我的原件",
         name: "group2",
         graphHeight: 250,
         layoutOptions: {
@@ -231,17 +232,20 @@ const initializeStencil = (graph: any) => {
       },
     ],
     layoutOptions: {
-      columns: 2,
-      columnWidth: 80,
+      columns: 3,
+      columnWidth: 85,
       rowHeight: 55,
     },
-  });
+  },
+  );
   document.getElementById("stencil")!.appendChild(stencil.container);
   return stencil;
 };
 
 // 初始化鼠标/键盘事件
 const initializeMouseEvent = (graph: any) => {
+
+    // 复制
   graph.bindKey(["meta+c", "ctrl+c"], () => {
     const cells = graph.getSelectedCells();
     if (cells.length) {
@@ -249,6 +253,8 @@ const initializeMouseEvent = (graph: any) => {
     }
     return false;
   });
+
+  // 剪切
   graph.bindKey(["meta+x", "ctrl+x"], () => {
     const cells = graph.getSelectedCells();
     if (cells.length) {
@@ -256,6 +262,8 @@ const initializeMouseEvent = (graph: any) => {
     }
     return false;
   });
+
+  // 粘贴
   graph.bindKey(["meta+v", "ctrl+v"], () => {
     if (!graph.isClipboardEmpty()) {
       const cells = graph.paste({ offset: 32 });
@@ -265,19 +273,21 @@ const initializeMouseEvent = (graph: any) => {
     return false;
   });
 
-  //undo redo
+  // 撤销动作
   graph.bindKey(["meta+z", "ctrl+z"], () => {
     if (graph.history.canUndo()) {
       graph.history.undo();
     }
     return false;
   });
-  graph.bindKey(["meta+shift+z", "ctrl+shift+z"], () => {
-    if (graph.history.canRedo()) {
-      graph.history.redo();
-    }
-    return false;
-  });
+
+  // 重做
+//   graph.bindKey(["meta+shift+z", "ctrl+shift+z"], () => {
+//     if (graph.history.canRedo()) {
+//       graph.history.redo();
+//     }
+//     return false;
+//   });
 
   // select all
   graph.bindKey(["meta+a", "ctrl+a"], () => {
@@ -288,12 +298,6 @@ const initializeMouseEvent = (graph: any) => {
   });
 
   //delete
-  //   graph.bindKey("backspace", () => {
-  //     const cells = graph.getSelectedCells();
-  //     if (cells.length) {
-  //       graph.removeCells(cells);
-  //     }
-  //   });
   graph.bindKey("delete", () => {
     const cells = graph.getSelectedCells();
     if (cells.length) {
@@ -330,9 +334,13 @@ const initializeMouseEvent = (graph: any) => {
   });
 };
 
+// 渲染画布
 export const getX6Render = () => {
+    
   const graph: any = initializeX6Graph();
+
   const stencil: any = initializeStencil(graph);
+
   initializeMouseEvent(graph);
 
   const ports = {
@@ -415,8 +423,6 @@ export const getX6Render = () => {
   };
 
   const textNode = graph.createNode({
-    x: 320,
-    y: 250,
     width: 100,
     height: 40,
     data: {
@@ -439,7 +445,7 @@ export const getX6Render = () => {
       },
     },
   });
-  stencil.load([textNode], "group1");
+  stencil.load([textNode,textNode,textNode], "group1");
 
   const imageShapes = [
     {
@@ -449,6 +455,12 @@ export const getX6Render = () => {
         name: "交叉管道",
         content: "",
       },
+      text: {
+        textWrap: {
+          text: "交叉管道",
+          width: -10,
+        },
+      },
     },
     {
       label: "self",
@@ -457,6 +469,12 @@ export const getX6Render = () => {
         name: "旋转管道",
         content: "",
       },
+      text: {
+        textWrap: {
+          text: "旋转管道",
+          width: -10,
+        },
+      },
     },
     {
       label: "self",
@@ -464,6 +482,12 @@ export const getX6Render = () => {
       data: {
         name: "横向管道",
         content: "",
+      },
+      text: {
+        textWrap: {
+          text: "横向管道",
+          width: -10,
+        },
       },
     },
   ];

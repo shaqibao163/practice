@@ -4,7 +4,7 @@
  * @Author: bclz
  * @Date: 2021-12-01 15:11:59
  * @LastEditors: bclz
- * @LastEditTime: 2021-12-10 09:38:29
+ * @LastEditTime: 2021-12-10 11:20:16
  */
 import React, { Component } from 'react';
 import { Button, Form, Input } from 'antd'
@@ -23,6 +23,7 @@ interface IState {
 
 export default class App extends Component<any, IState> {
   formRef: any = React.createRef()
+  graphHistory: any
   state = {
     cell: { getAttrs: () => { }, setAttrs: (a: any) => { } },
     graphView: { toJSON: () => { }, dispose: () => { }, on: (a: string, e: any) => { }, getCellById: (a: string) => { } },
@@ -32,10 +33,10 @@ export default class App extends Component<any, IState> {
 
   // 初始化
   initializeView = () => {
-   const graph = getX6Render()
-    graph.on('cell:click', (e:any) => {
+    const graph = getX6Render()
+    graph.on('cell:click', (e: any) => {
       const { cell } = e
-      window.console.log(cell.toJSON())
+      // window.console.log(cell.toJSON())
       const { data } = cell.getAttrs()
       const { name, content } = data
       const { current } = this.formRef
@@ -47,6 +48,8 @@ export default class App extends Component<any, IState> {
         cell
       })
     })
+
+    this.graphHistory = graph.history
 
     this.setState({ graphView: graph })
   }
@@ -101,7 +104,7 @@ export default class App extends Component<any, IState> {
 
   render() {
     const { isPreview } = this.state
-    return <div id='container'>
+    return <div id='container-box'>
       {!isPreview ? <>
         <div id='stencil' />
         <div id='graph-container' />
@@ -118,7 +121,7 @@ export default class App extends Component<any, IState> {
             validateTrigger='onBlur'
           >
             <Form.Item
-              label="名称"
+              label="原件类型"
               name="name"
               rules={[{ required: true, message: 'Please input your username!' }]}
             >
