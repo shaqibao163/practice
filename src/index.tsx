@@ -1,5 +1,14 @@
+/*
+ * @Description: 
+ * @Version: 1.0
+ * @Author: bclz
+ * @Date: 2021-12-01 15:11:59
+ * @LastEditors: bclz
+ * @LastEditTime: 2021-12-02 10:26:34
+ */
 import React from 'react';
 import ReactDOM from 'react-dom';
+import 'antd/dist/antd.css';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
