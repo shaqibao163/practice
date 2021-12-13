@@ -4,15 +4,17 @@
  * @Author: bclz
  * @Date: 2021-12-10 09:05:24
  * @LastEditors: bclz
- * @LastEditTime: 2021-12-10 17:19:57
+ * @LastEditTime: 2021-12-13 17:56:22
  */
 
 import { Graph, Shape, Addon, ToolsView, Point, EdgeView } from "@antv/x6";
+import coolFan from "../images/cool-fan.gif";
+import textIcon from "../images/icon_text_default@2x.png";
 import pipelineCross from "../images/pipeline-cross.svg"; // 交叉管道
 import pipelineRevolve from "../images/pipeline-revolve.svg"; // 旋转管道
 import pipelineTransverse from "../images/pipeline-transverse.svg"; // 横向管道
 
-// 注册文本编辑原件
+// 注册文本编辑元件
 class EditableCellTool extends ToolsView.ToolItem<
   EdgeView,
   EditableCellToolOptions
@@ -209,7 +211,7 @@ const initializeX6Graph = () => {
   });
 };
 
-// 创建左侧工具栏
+// 创建左侧工具栏/元件库
 const initializeStencil = (graph: any) => {
   const stencil = new Addon.Stencil({
     title: "流程图",
@@ -217,14 +219,53 @@ const initializeStencil = (graph: any) => {
     stencilGraphWidth: 280,
     stencilGraphHeight: 180,
     collapsable: true,
+    getDropNode: (sourceNode: any) => {
+      const { data } = sourceNode.toJSON();
+      const { type } = data;
+      if (type === "textNode") {
+        // 当拖拽文本节点时，替换节点样式
+        const textNode = graph.createNode({
+          width: 100,
+          height: 40,
+          data: {
+            typeName: "文本",
+            type: "textNode",
+            name: "元件名称",
+          },
+          attrs: {
+            body: {
+              stroke: "transparent",
+              fill: "transparent",
+              // strokeWidth: 1,
+            },
+            text: {
+              textWrap: {
+                text: "双击编辑",
+                width: -1,
+              },
+            },
+          },
+        });
+        return textNode;
+      }
+      return sourceNode.clone();
+    },
     groups: [
       {
-        title: "系统原件",
+        title: "系统元件",
         name: "group1",
       },
       {
-        title: "我的原件",
+        title: "我的元件",
         name: "group2",
+        graphHeight: 250,
+        layoutOptions: {
+          rowHeight: 70,
+        },
+      },
+      {
+        title: "特殊元件",
+        name: "group3",
         graphHeight: 250,
         layoutOptions: {
           rowHeight: 70,
@@ -241,6 +282,356 @@ const initializeStencil = (graph: any) => {
   return stencil;
 };
 
+// 创建公共元件连线桩
+const commonPorts = () => {
+  return {
+    groups: {
+      top: {
+        position: "top",
+        attrs: {
+          circle: {
+            r: 4,
+            magnet: true,
+            stroke: "#5F95FF",
+            strokeWidth: 1,
+            fill: "#fff",
+            style: {
+              visibility: "hidden",
+            },
+          },
+        },
+      },
+      right: {
+        position: "right",
+        attrs: {
+          circle: {
+            r: 4,
+            magnet: true,
+            stroke: "#5F95FF",
+            strokeWidth: 1,
+            fill: "#fff",
+            style: {
+              visibility: "hidden",
+            },
+          },
+        },
+      },
+      bottom: {
+        position: "bottom",
+        attrs: {
+          circle: {
+            r: 4,
+            magnet: true,
+            stroke: "#5F95FF",
+            strokeWidth: 1,
+            fill: "#fff",
+            style: {
+              visibility: "hidden",
+            },
+          },
+        },
+      },
+      left: {
+        position: "left",
+        attrs: {
+          circle: {
+            r: 4,
+            magnet: true,
+            stroke: "#5F95FF",
+            strokeWidth: 1,
+            fill: "#fff",
+            style: {
+              visibility: "hidden",
+            },
+          },
+        },
+      },
+    },
+    items: [
+      {
+        group: "top",
+      },
+      {
+        group: "right",
+      },
+      {
+        group: "bottom",
+      },
+      {
+        group: "left",
+      },
+    ],
+  };
+};
+
+// 创建以及注册系统元件
+const createSysComponent = (ports: any, graph: any, stencil: any) => {
+  // 虚拟文本节点
+  const virtualTextNode = graph.createNode({
+    shape: "custom-image",
+    //   label: item.label,
+    data: {
+      typeName: "图片",
+      type: "textNode",
+      name: "文本",
+    },
+    attrs: {
+      image: {
+        "xlink:href": textIcon,
+      },
+    },
+  });
+
+  // 注册矩形
+  Graph.registerNode(
+    "custom-rect",
+    {
+      inherit: "rect",
+      width: 60,
+      height: 40,
+      attrs: {
+        body: {
+          strokeWidth: 1,
+          stroke: "#5F95FF",
+          fill: "#EFF4FF",
+          rx: 0,
+          ry: 0,
+        },
+        text: {
+          fontSize: 12,
+          fill: "#262626",
+        },
+      },
+      ports: { ...ports },
+    },
+    true
+  );
+  // 创建矩形
+  const rectangleNode = graph.createNode({
+    shape: "custom-rect",
+    label: "",
+    data: {
+      typeName: "多边形",
+      type: "polygonNode",
+      name: "矩形",
+    },
+  });
+
+  // 注册菱形
+  Graph.registerNode(
+    "custom-polygon",
+    {
+      inherit: "polygon",
+      width: 60,
+      height: 40,
+      label: "",
+      attrs: {
+        body: {
+          strokeWidth: 1,
+          stroke: "#5F95FF",
+          fill: "#EFF4FF",
+        },
+        text: {
+          fontSize: 12,
+          fill: "#262626",
+        },
+      },
+      ports: { ...ports },
+    },
+    true
+  );
+  // 创建菱形节点
+  const lozengeNode = graph.createNode({
+    shape: "custom-polygon",
+    data: {
+      typeName: "多边形",
+      type: "polygonNode",
+      name: "菱形",
+    },
+    attrs: {
+      body: {
+        refPoints: "0,10 10,0 20,10 10,20",
+      },
+    },
+  });
+
+  // 注册平行四边形
+  Graph.registerNode(
+    "custom-parallel-rectangle",
+    {
+      inherit: "polygon",
+      width: 60,
+      height: 40,
+      label: "",
+      attrs: {
+        body: {
+          strokeWidth: 1,
+          stroke: "#5F95FF",
+          fill: "#EFF4FF",
+        },
+        text: {
+          fontSize: 12,
+          fill: "#262626",
+        },
+      },
+      ports: {
+        ...ports,
+        items: [
+          {
+            group: "top",
+          },
+          {
+            group: "bottom",
+          },
+        ],
+      },
+    },
+    true
+  );
+  // 创建平行四边形
+  const parallelRectangleNode = graph.createNode({
+    shape: "custom-parallel-rectangle",
+    data: {
+      typeName: "多边形",
+      type: "polygonNode",
+      name: "平行四边形",
+    },
+    attrs: {
+      body: {
+        refPoints: "10,0 40,0 30,20 0,20",
+      },
+    },
+    label: "",
+  });
+
+  // 注册圆形
+  Graph.registerNode(
+    "custom-circle",
+    {
+      inherit: "circle",
+      width: 40,
+      height: 40,
+      label: "",
+      attrs: {
+        body: {
+          strokeWidth: 1,
+          stroke: "#5F95FF",
+          fill: "#EFF4FF",
+        },
+        text: {
+          fontSize: 12,
+          fill: "#262626",
+        },
+      },
+      ports: { ...ports },
+    },
+    true
+  );
+  // 创建圆形节点
+  const circleNode = graph.createNode({
+    shape: "custom-circle",
+    data: {
+      typeName: "多边形",
+      type: "polygonNode",
+      name: "圆形",
+    },
+  });
+
+  stencil.load(
+    [
+      virtualTextNode,
+      rectangleNode,
+      lozengeNode,
+      parallelRectangleNode,
+      circleNode,
+    ],
+    "group1"
+  );
+};
+
+// 创建以及注册我的元件
+const createMyselfComponent = (ports: any, graph: any, stencil: any) => {
+  const imageShapes = [
+    {
+      label: "self",
+      image: coolFan,
+      data: {
+        typeName: "图片",
+        type: "imgNode",
+        name: "风机",
+      },
+    },
+    {
+      label: "self",
+      image: pipelineCross,
+      data: {
+        typeName: "图片",
+        type: "imgNode",
+        name: "交叉管道",
+      },
+    },
+    {
+      label: "self",
+      image: pipelineRevolve,
+      data: {
+        typeName: "图片",
+        type: "imgNode",
+        name: "旋转管道",
+      },
+    },
+    {
+      label: "self",
+      image: pipelineTransverse,
+      data: {
+        typeName: "图片",
+        type: "imgNode",
+        name: "横向管道",
+      },
+    },
+  ];
+
+  // 注册图片节点
+  Graph.registerNode(
+    "custom-image",
+    {
+      inherit: "rect",
+      width: 52,
+      height: 52,
+      markup: [
+        {
+          tagName: "image",
+          selector: "body",
+        },
+      ],
+      attrs: {
+        body: {
+          stroke: "#5F95FF",
+          fill: "#5F95FF",
+        },
+      },
+      ports: { ...ports },
+    },
+    true
+  );
+
+  const imageNodes = imageShapes.map((item) =>
+    graph.createNode({
+      shape: "custom-image",
+      //   label: item.label,
+      data: item.data,
+      attrs: {
+        image: {
+          "xlink:href": item.image,
+        },
+      },
+    })
+  );
+
+  stencil.load(imageNodes, "group2");
+};
+
+const createSpecialComponent = (ports: any, graph: any, stencil: any) => {};
+
 // 初始化鼠标/键盘事件
 const initializeMouseEvent = (graph: any) => {
   // 复制
@@ -248,28 +639,33 @@ const initializeMouseEvent = (graph: any) => {
     const cells = graph.getSelectedCells();
     if (cells.length) {
       graph.copy(cells);
+      if (!graph.isClipboardEmpty()) {
+        const cells = graph.paste({ offset: 32 });
+        graph.cleanSelection();
+        graph.select(cells);
+      }
     }
     return false;
   });
 
   // 剪切
-  graph.bindKey(["meta+x", "ctrl+x"], () => {
-    const cells = graph.getSelectedCells();
-    if (cells.length) {
-      graph.cut(cells);
-    }
-    return false;
-  });
+  // graph.bindKey(["meta+x", "ctrl+x"], () => {
+  //   const cells = graph.getSelectedCells();
+  //   if (cells.length) {
+  //     graph.cut(cells);
+  //   }
+  //   return false;
+  // });
 
   // 粘贴
-  graph.bindKey(["meta+v", "ctrl+v"], () => {
-    if (!graph.isClipboardEmpty()) {
-      const cells = graph.paste({ offset: 32 });
-      graph.cleanSelection();
-      graph.select(cells);
-    }
-    return false;
-  });
+  // graph.bindKey(["meta+v", "ctrl+v"], () => {
+  //   if (!graph.isClipboardEmpty()) {
+  //     const cells = graph.paste({ offset: 32 });
+  //     graph.cleanSelection();
+  //     graph.select(cells);
+  //   }
+  //   return false;
+  // });
 
   // 撤销动作
   graph.bindKey(["meta+z", "ctrl+z"], () => {
@@ -330,106 +726,52 @@ const initializeMouseEvent = (graph: any) => {
       },
     ]);
   });
+
+  const showPorts = (ports: NodeListOf<SVGElement>, show: boolean) => {
+    for (let i = 0, len = ports.length; i < len; i = i + 1) {
+      ports[i].style.visibility = show ? "visible" : "hidden";
+    }
+  };
+
+  graph.on("node:mouseenter", () => {
+    const container = document.getElementById("graph-container")!;
+    const ports = container.querySelectorAll(
+      ".x6-port-body"
+    ) as NodeListOf<SVGElement>;
+    showPorts(ports, true);
+  });
+
+  graph.on("node:mouseleave", () => {
+    const container = document.getElementById("graph-container")!;
+    const ports = container.querySelectorAll(
+      ".x6-port-body"
+    ) as NodeListOf<SVGElement>;
+    showPorts(ports, false);
+  });
 };
 
 // 渲染画布
 export const getX6Render = () => {
+  // 创建画布
   const graph: any = initializeX6Graph();
 
+  // 创建左侧工具栏/元件库
   const stencil: any = initializeStencil(graph);
 
+  // 创建公共元件连线桩
+  const ports = commonPorts();
+
+  // 创建以及注册我的元件
+  createMyselfComponent(ports, graph, stencil);
+
+  // 创建以及注册系统元件
+  createSysComponent(ports, graph, stencil);
+
+  //创建以及注册特殊元件
+  createSpecialComponent(ports, graph, stencil);
+
+  // 初始化鼠标/键盘事件
   initializeMouseEvent(graph);
 
-  // 可编辑文本元件
-  const textNode = graph.createNode({
-    width: 100,
-    height: 40,
-    data: {
-      typeName: "文本",
-      type: "textNode",
-      name: "元件名称",
-    },
-    attrs: {
-      body: {
-        stroke: "rgba(0,0,0,0.2)",
-        fill: "transparent",
-        strokeWidth: 1,
-      },
-      text: {
-        textWrap: {
-          text: "文本原件",
-          width: -10,
-        },
-      },
-    },
-  });
-
-  stencil.load([textNode], "group1");
-
-  const imageShapes = [
-    {
-      label: "self",
-      image: pipelineCross,
-      data: {
-        typeName: "图片",
-        type: "imgNode",
-        name: "交叉管道",
-      },
-    },
-    {
-      label: "self",
-      image: pipelineRevolve,
-      data: {
-        typeName: "图片",
-        type: "imgNode",
-        name: "旋转管道",
-      },
-    },
-    {
-      label: "self",
-      image: pipelineTransverse,
-      data: {
-        typeName: "图片",
-        type: "imgNode",
-        name: "横向管道",
-      },
-    },
-  ];
-
-  Graph.registerNode(
-    "custom-image",
-    {
-      inherit: "rect",
-      width: 52,
-      height: 52,
-      markup: [
-        {
-          tagName: "image",
-          selector: "body",
-        },
-      ],
-      attrs: {
-        body: {
-          stroke: "#5F95FF",
-          fill: "#5F95FF",
-        },
-      },
-    },
-    true
-  );
-
-  const imageNodes = imageShapes.map((item) =>
-    graph.createNode({
-      shape: "custom-image",
-      //   label: item.label,
-      data: item.data,
-      attrs: {
-        image: {
-          "xlink:href": item.image,
-        },
-      },
-    })
-  );
-  stencil.load(imageNodes, "group2");
   return graph;
 };
