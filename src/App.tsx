@@ -31,8 +31,8 @@ export default class App extends Component<any, IState> {
   }
 
 
-  // 点击节点事件
-  nodeAction = (type: string) => {
+  // 鼠标点击模拟键盘事件
+  emulateKeyboard = (type: string) => {
 
     interface IPositions {
       x: number
@@ -158,12 +158,37 @@ export default class App extends Component<any, IState> {
     const graph = getX6Render()
     graph.on('cell:click', (e: any) => {
       const { cell } = e
-      const { data } = cell.toJSON()
-      const { current } = this.formRef
-      current.setFieldsValue(data)
-      this.setState({
-        currentCell: cell
-      })
+      const { data, attrs, shape } = cell.toJSON()
+
+      // const { current } = this.formRef
+      // current.setFieldsValue(data)
+
+      // const { text } = attrs
+      // const { textWrap } = text
+      // if (textWrap) {
+      //   const { text } = textWrap
+      //   current.setFieldsValue({ text })
+      // }
+
+      // this.setState({
+      //   currentCell: cell
+      // })
+
+      // if (shape === 'edge') {
+      //   const { cells } = graph.toJSON()
+      //   window.console.log(cell.toJSON())
+      //   const data = cells.map((item: any) => {
+      //     const copyItem = { ...item }
+      //     if (copyItem.shape === "edge") {
+      //       // copyItem.tools = ['vertices', 'button-remove']
+      //       // copyItem.connector = 'smooth'
+      //       copyItem.tools = ['vertices']
+      //     }
+      //     return copyItem
+      //   })
+      //   graph.fromJSON({ cells: data });
+
+      // }
     })
 
     graph.on('blank:click', (e: any) => {
@@ -185,16 +210,17 @@ export default class App extends Component<any, IState> {
     }, () => {
       graphView?.dispose()
       const { graphData } = this.state
-      const container: any = document.getElementById('preview-container')
-      const graph = new Graph({
-        container,
-        grid: true,
-        interacting: {
-          nodeMovable: false
-        },
-      });
-
-      graph.fromJSON(graphData);
+      window.console.log(document.getElementById('preview-container'))
+      // const container: any = document.getElementById('preview-container')
+      // const graph = new Graph({
+      //   container,
+      //   grid: true,
+      //   interacting: {
+      //     nodeMovable: false
+      //   },
+      // });
+      const graph = getX6Render()
+      // graph.fromJSON(graphData);
 
 
       // graph.on('cell:click', (e) => {
@@ -210,12 +236,29 @@ export default class App extends Component<any, IState> {
 
       // graph.getCells()
 
-      this.setState({ graphView: graph })
+      // this.setState({ graphView: graph })
     })
   }
 
-  formChange = (a: any, b: any) => {
-    window.console.log(a)
+  // 表单触发 数据填充元件
+  formChange = (currentFormItem: any) => {
+    const { graphView } = this.state
+    const { name, value } = currentFormItem[0]
+    const cells: any = graphView.getSelectedCells();
+    if (cells.length) {
+      const attrs = cells[0].getAttrs()
+      const { text } = attrs
+      cells.forEach((item: any) => {
+        item.setAttrs({
+          ...attrs,
+          text: {
+            ...text, textWrap: {
+              text: value
+            }
+          }
+        })
+      })
+    }
   }
 
 
@@ -227,24 +270,24 @@ export default class App extends Component<any, IState> {
     const { isPreview } = this.state
     return <div id='container-box'>
       <div id='container-header'>
-        <Button onClick={() => this.nodeAction('copy')}>复制 / 粘贴（ctrl+c）</Button>
-        <Button onClick={() => this.nodeAction('undo')}>撤销（ctrl+z）</Button>
-        <Button onClick={() => this.nodeAction('top')}>原件置顶</Button>
-        <Button onClick={() => this.nodeAction('bottom')}>原件置底</Button>
-        <Button onClick={() => this.nodeAction('zoomL')}><PlusOutlined /></Button>
-        <Button onClick={() => this.nodeAction('zoomS')}><MinusOutlined /></Button>
-        <Button onClick={() => this.nodeAction('zoomD')}>还原比例</Button>
-        <Button onClick={() => this.nodeAction('leftAlign')}>左对齐</Button>
-        <Button onClick={() => this.nodeAction('rightAlign')}>右对齐</Button>
-        <Button onClick={() => this.nodeAction('topAlign')}>顶部对齐</Button>
-        <Button onClick={() => this.nodeAction('bottomAlign')}>底部对齐</Button>
+        <Button onClick={() => this.emulateKeyboard('copy')}>复制 / 粘贴（ctrl+c）</Button>
+        <Button onClick={() => this.emulateKeyboard('undo')}>撤销（ctrl+z）</Button>
+        <Button onClick={() => this.emulateKeyboard('top')}>原件置顶</Button>
+        <Button onClick={() => this.emulateKeyboard('bottom')}>原件置底</Button>
+        <Button onClick={() => this.emulateKeyboard('zoomL')}><PlusOutlined /></Button>
+        <Button onClick={() => this.emulateKeyboard('zoomS')}><MinusOutlined /></Button>
+        <Button onClick={() => this.emulateKeyboard('zoomD')}>还原比例</Button>
+        <Button onClick={() => this.emulateKeyboard('leftAlign')}>左对齐</Button>
+        <Button onClick={() => this.emulateKeyboard('rightAlign')}>右对齐</Button>
+        <Button onClick={() => this.emulateKeyboard('topAlign')}>顶部对齐</Button>
+        <Button onClick={() => this.emulateKeyboard('bottomAlign')}>底部对齐</Button>
         <Button onClick={this.preview}>预览</Button>
       </div>
       <div id='container-main'>
         {!isPreview ? <>
           <div id='stencil' />
           <div id='graph-container' />
-        </> : <div id='preview-container'>1</div>}
+        </> : <div id='preview-container'></div>}
         <div id='action'>
           <div className='form'>
             <Form
@@ -255,20 +298,20 @@ export default class App extends Component<any, IState> {
               validateTrigger='onBlur'
             >
               <Form.Item
-                label="原件类型名称"
+                label="元件类型名称"
                 name="typeName"
               >
                 <Input disabled />
               </Form.Item>
               <Form.Item
-                label="原件类型key"
+                label="元件类型key"
                 name="type"
               >
                 <Input disabled />
               </Form.Item>
               <Form.Item
                 label="数据"
-                name="data"
+                name="text"
               >
                 <Input />
               </Form.Item>

@@ -1,0 +1,16 @@
+<svg width="598" height="299" xmlns="http://www.w3.org/2000/svg" fill='transparent'>
+ <g>
+  <title>Layer 1</title>
+  <rect fill="#fff" x="1" y="0" width="200" height="100" id="svg_1" stroke="#000"/>
+  <rect fill="#fff" stroke="#000" x="422" y="183" width="2" height="0" id="svg_2"/>
+  <rect fill="#fff" x="199" y="0" width="200" height="100" id="svg_17" stroke="#000"/>
+  <rect fill="#fff" x="397" y="0" width="200" height="100" id="svg_18" stroke="#000"/>
+  <rect fill="#fff" x="1" y="99" width="200" height="100" id="svg_19" stroke="#000"/>
+  <rect fill="#fff" x="199" y="99" width="200" height="100" id="svg_20" stroke="#000"/>
+  <rect fill="#fff" x="397" y="99" width="200" height="100" id="svg_21" stroke="#000"/>
+  <rect fill="#fff" x="1" y="198" width="200" height="100" id="svg_22" stroke="#000"/>
+  <rect fill="#fff" x="199" y="198" width="200" height="100" id="svg_23" stroke="#000"/>
+  <rect fill="#fff" x="397" y="198" width="200" height="100" id="svg_24" stroke="#000"/>
+ </g>
+
+</svg>
