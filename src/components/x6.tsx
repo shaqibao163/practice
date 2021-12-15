@@ -4,7 +4,7 @@
  * @Author: bclz
  * @Date: 2021-12-10 09:05:24
  * @LastEditors: bclz
- * @LastEditTime: 2021-12-14 18:10:19
+ * @LastEditTime: 2021-12-15 17:55:18
  */
 
 import { Graph, Shape, Addon, ToolsView, Point, EdgeView } from "@antv/x6";
@@ -13,7 +13,7 @@ import coolFan from "../images/cool-fan.gif";
 import textIcon from "../images/icon_text_default@2x.png";
 import timeIcon from "../images/icon_time_default@2x.png";
 import lineIcon from "../images/selfLine.svg";
-import tabelIcon from '../images/selfTable.svg'
+import tabelIcon from '../images/icon_table_default@2x.png'
 import pipelineCross from "../images/pipeline-cross.svg"; // 交叉管道
 import pipelineRevolve from "../images/pipeline-revolve.svg"; // 旋转管道
 import pipelineTransverse from "../images/pipeline-transverse.svg"; // 横向管道
@@ -143,9 +143,8 @@ export interface EditableCellToolOptions extends ToolsView.ToolItem.Options {
 }
 
 // 创建画布
-const initializeX6Graph = () => {
+const initializeX6Graph = (isPreview?: boolean) => {
   Graph.registerNodeTool("editableCell", EditableCellTool, true);
-
   return new Graph({
     container: document.getElementById("graph-container")!,
     grid: true,
@@ -212,18 +211,22 @@ const initializeX6Graph = () => {
     snapline: true,
     keyboard: true,
     clipboard: true,
+    interacting: {
+      nodeMovable: !isPreview,
+      edgeMovable: !isPreview,
+    }
   });
 };
 
 // 创建左侧工具栏/元件库
-const initializeStencil = (graph: any) => {
+const initializeStencil = (graph: any, ports: any) => {
   const stencilBox = document.getElementById("stencil");
   if (stencilBox) {
     const stencil = new Addon.Stencil({
       title: "流程图",
       target: graph,
       stencilGraphWidth: 280,
-      stencilGraphHeight: 180,
+      stencilGraphHeight: 250,
       collapsable: true,
       getDropNode: (sourceNode: any) => {
         const { data } = sourceNode.toJSON();
@@ -249,11 +252,12 @@ const initializeStencil = (graph: any) => {
               ? text
               : {
                 textWrap: {
-                  text: "双击编辑",
+                  text: "文本编辑",
                   width: -1,
                 },
               },
           },
+          ports: { ...ports },
         });
 
         if (type === "textNode") {
@@ -297,7 +301,59 @@ const initializeStencil = (graph: any) => {
                 refPoints: '0,40 40,40 40',
               },
             },
+            ports: { ...ports },
           });
+        }
+
+        if (type === 'tableNode') {
+          return graph.createNode({
+            width: 160,
+            height: 60,
+            shape: 'html',
+            data: {
+              typeName: "表格",
+              type: "tableNode",
+              name: "直线",
+              custom: {
+                row: 3,
+                column: 3,
+              },
+              time: new Date().toString(),
+            },
+            html: 'html-table',
+            ports: { ...ports },
+          })
+        }
+
+        if (type === 'virtualImgNode') {
+          return graph.createNode({
+            shape: "custom-image",
+            //   label: item.label,
+            data: {
+              typeName: "表格",
+              type: "tableNode",
+              name: "直线",
+            },
+            attrs: {
+              text: {
+                fontSize: 12,
+                fill: "#262626",
+                textWrap: {
+                  text: "",
+                },
+              },
+              body: {
+                strokeWidth: 1,
+                stroke: "#5F95FF",
+                fill: "#EFF4FF",
+                rx: 0,
+                ry: 0,
+              },
+              image: {
+                "xlink:href": coolFan,
+              },
+            },
+          })
         }
         return sourceNode.clone();
       },
@@ -305,6 +361,9 @@ const initializeStencil = (graph: any) => {
         {
           title: "系统元件",
           name: "group1",
+          layoutOptions: {
+            rowHeight: 70,
+          },
         },
         {
           title: "我的元件",
@@ -417,41 +476,40 @@ const commonPorts = () => {
   };
 };
 
-// 创建以及注册系统元件
-const createSysComponent = (ports: any, graph: any, stencil: any) => {
-  // 虚拟文本节点
-  const virtualTextNode = graph.createNode({
-    shape: "custom-image",
-    //   label: item.label,
-    data: {
-      typeName: "图片",
-      type: "textNode",
-      name: "文本",
-    },
-    attrs: {
-      image: {
-        "xlink:href": textIcon,
-      },
-    },
-  });
+// 统一注册所有元件
+const registerComponent = (ports: any) => {
 
-  // 虚拟时间节点
-  const virtualTimeNode = graph.createNode({
-    shape: "custom-image",
-    //   label: item.label,
-    data: {
-      typeName: "图片",
-      type: "timeNode",
-      name: "时间",
-    },
-    attrs: {
-      image: {
-        "xlink:href": timeIcon,
-      },
-    },
-  });
+  // 注册自定义元件 表格
+  Graph.registerHTMLComponent('html-table', (node) => {
+    const { custom } = node.getData()
+    const { row, column } = custom
+    let rowArr: string = '', columnStr: string = ''
+    for (let i = 0; i < column; i += 1) {
+      columnStr += `<div class="table-column"></div>`
+    }
+    for (let i = 0; i < row; i += 1) {
+      rowArr += `<div class="table-row">${columnStr}</div>`
+    }
+    return (
+      `<div class="html-node-table">
+   ${rowArr}
+    </div>`
+    )
+  })
 
-  // 注册矩形
+  // 注册自定义元件 表格
+  Graph.registerHTMLComponent('html-img', (node) => {
+    const { custom } = node.getData()
+    const { url, title } = custom
+    return (
+      `<div class="html-node-img">
+      <img src='${url}' />
+      <span>${title}</span>
+    </div>`
+    )
+  })
+
+  // 注册系统元件 矩形
   Graph.registerNode(
     "custom-rect",
     {
@@ -462,35 +520,8 @@ const createSysComponent = (ports: any, graph: any, stencil: any) => {
     },
     true
   );
-  // 创建矩形
-  const rectangleNode = graph.createNode({
-    shape: "custom-rect",
-    label: "",
-    attrs: {
-      body: {
-        strokeWidth: 1,
-        stroke: "#5F95FF",
-        fill: "#EFF4FF",
-        rx: 0,
-        ry: 0,
-      },
-      text: {
-        fontSize: 12,
-        fill: "#262626",
-        style: { display: "" },
-        textWrap: {
-          text: "",
-        },
-      },
-    },
-    data: {
-      typeName: "多边形",
-      type: "polygonNode",
-      name: "矩形",
-    },
-  });
 
-  // 注册菱形
+  // 注册系统元件 菱形
   Graph.registerNode(
     "custom-polygon",
     {
@@ -513,30 +544,8 @@ const createSysComponent = (ports: any, graph: any, stencil: any) => {
     },
     true
   );
-  // 创建菱形节点
-  const lozengeNode = graph.createNode({
-    shape: "custom-polygon",
-    data: {
-      typeName: "多边形",
-      type: "polygonNode",
-      name: "菱形",
-    },
-    attrs: {
-      body: {
-        refPoints: "0,10 10,0 20,10 10,20",
-      },
-      text: {
-        fontSize: 12,
-        fill: "#262626",
-        style: { display: "" },
-        textWrap: {
-          text: "",
-        },
-      },
-    },
-  });
 
-  // 注册平行四边形
+  // 注册系统元件 平行四边形
   Graph.registerNode(
     "custom-parallel-rectangle",
     {
@@ -569,6 +578,123 @@ const createSysComponent = (ports: any, graph: any, stencil: any) => {
     },
     true
   );
+
+  // 注册系统元件 圆形
+  Graph.registerNode(
+    "custom-circle",
+    {
+      inherit: "circle",
+      width: 40,
+      height: 40,
+      label: "",
+      ports: { ...ports },
+    },
+    true
+  );
+
+  // 注册我的原件 图片
+  Graph.registerNode(
+    "custom-image",
+    {
+      inherit: "rect",
+      width: 52,
+      height: 52,
+      markup: [
+        {
+          tagName: "image",
+          selector: "body",
+        },
+      ],
+      ports: { ...ports },
+    },
+    true
+  );
+}
+
+// 创建系统元件
+const createSysComponent = (ports: any, graph: any, stencil: any) => {
+
+  // 创建虚拟文本节点
+  const virtualTextNode = graph.createNode({
+    shape: "custom-image",
+    data: {
+      typeName: "图片",
+      type: "textNode",
+      name: "文本",
+    },
+    attrs: {
+      image: {
+        "xlink:href": textIcon,
+      },
+    },
+  });
+
+  // 创建虚拟时间节点
+  const virtualTimeNode = graph.createNode({
+    shape: "custom-image",
+    //   label: item.label,
+    data: {
+      typeName: "图片",
+      type: "timeNode",
+      name: "时间",
+    },
+    attrs: {
+      image: {
+        "xlink:href": timeIcon,
+      },
+    },
+  });
+
+  // 创建矩形
+  const rectangleNode = graph.createNode({
+    shape: "custom-rect",
+    attrs: {
+      body: {
+        strokeWidth: 1,
+        stroke: "#5F95FF",
+        fill: "#EFF4FF",
+        rx: 0,
+        ry: 0,
+      },
+      text: {
+        fontSize: 12,
+        fill: "#262626",
+        style: { display: "" },
+        textWrap: {
+          text: "矩形",
+        },
+      },
+    },
+    data: {
+      typeName: "多边形",
+      type: "polygonNode",
+      name: "矩形",
+    },
+  });
+
+  // 创建菱形节点
+  const lozengeNode = graph.createNode({
+    shape: "custom-polygon",
+    data: {
+      typeName: "多边形",
+      type: "polygonNode",
+      name: "菱形",
+    },
+    attrs: {
+      body: {
+        refPoints: "0,10 10,0 20,10 10,20",
+      },
+      text: {
+        fontSize: 12,
+        fill: "#262626",
+        style: { display: "" },
+        textWrap: {
+          text: "",
+        },
+      },
+    },
+  });
+
   // 创建平行四边形
   const parallelRectangleNode = graph.createNode({
     shape: "custom-parallel-rectangle",
@@ -593,18 +719,6 @@ const createSysComponent = (ports: any, graph: any, stencil: any) => {
     label: "",
   });
 
-  // 注册圆形
-  Graph.registerNode(
-    "custom-circle",
-    {
-      inherit: "circle",
-      width: 40,
-      height: 40,
-      label: "",
-      ports: { ...ports },
-    },
-    true
-  );
   // 创建圆形节点
   const circleNode = graph.createNode({
     shape: "custom-circle",
@@ -662,14 +776,14 @@ const createSysComponent = (ports: any, graph: any, stencil: any) => {
     },
   });
 
-  // 表格节点
-  const tableNode = graph.createNode({
+  // 创建虚拟表格元件
+  const virtualTableNode = graph.createNode({
     shape: "custom-image",
     //   label: item.label,
     data: {
       typeName: "表格",
-      type: "lineNode",
-      name: "直线",
+      type: "tableNode",
+      name: "表格",
     },
     attrs: {
       image: {
@@ -677,6 +791,25 @@ const createSysComponent = (ports: any, graph: any, stencil: any) => {
       },
     },
   });
+
+  // 创建虚拟图片元件
+  const virtualImgNode = graph.createNode({
+    width: 52,
+    height: 80,
+    shape: 'html',
+    data: {
+      typeName: "图片",
+      type: "virtualImgNode",
+      name: "图片",
+      custom: {
+        url: coolFan,
+        title: '图片'
+      },
+      time: new Date().toString(),
+    },
+    html: 'html-img',
+    ports: { ...ports },
+  })
 
   stencil.load(
     [
@@ -687,13 +820,14 @@ const createSysComponent = (ports: any, graph: any, stencil: any) => {
       parallelRectangleNode,
       circleNode,
       lineNode,
-      tableNode
+      virtualTableNode,
+      virtualImgNode
     ],
     "group1"
   );
 };
 
-// 创建以及注册我的元件
+// 创建我的元件
 const createMyselfComponent = (ports: any, graph: any, stencil: any) => {
   const imageShapes = [
     {
@@ -734,24 +868,6 @@ const createMyselfComponent = (ports: any, graph: any, stencil: any) => {
     },
   ];
 
-  // 注册图片节点
-  Graph.registerNode(
-    "custom-image",
-    {
-      inherit: "rect",
-      width: 52,
-      height: 52,
-      markup: [
-        {
-          tagName: "image",
-          selector: "body",
-        },
-      ],
-      ports: { ...ports },
-    },
-    true
-  );
-
   const imageNodes = imageShapes.map((item) =>
     graph.createNode({
       shape: "custom-image",
@@ -779,14 +895,14 @@ const createMyselfComponent = (ports: any, graph: any, stencil: any) => {
       },
     })
   );
-
   stencil.load(imageNodes, "group2");
 };
 
+// 创建特殊元件
 const createSpecialComponent = (ports: any, graph: any, stencil: any) => { };
 
 // 初始化鼠标/键盘事件
-const initializeMouseEvent = (graph: any) => {
+const initializeMouseEvent = (graph: any, isPreview?: boolean) => {
   // 复制
   graph.bindKey(["meta+c", "ctrl+c"], () => {
     const cells = graph.getSelectedCells();
@@ -866,41 +982,47 @@ const initializeMouseEvent = (graph: any) => {
     }
   });
 
-  // 鼠标移入边 显示删除按钮以及二分按钮
-  graph.on("edge:mouseenter", (data: any) => {
-    const { cell } = data;
-    cell.addTools(
-      [
-        { name: "vertices" },
-        {
-          name: "button-remove",
-          args: { distance: 20 },
-        },
-      ],
-      "onhover"
-    );
-  });
+  if (!isPreview) {
+    // 鼠标移入边 显示删除按钮以及二分按钮
+    graph.on("edge:mouseenter", (data: any) => {
+      const { cell } = data;
+      cell.addTools(
+        [
+          { name: "vertices" },
+          {
+            name: "button-remove",
+            args: { distance: 20 },
+          },
+        ],
+        "onhover"
+      );
+    });
+    // 鼠标移除边 隐藏删除按钮以及二分按钮
+    graph.on("edge:mouseleave", (data: any) => {
+      const { cell } = data;
+      if (cell.hasTools("onhover")) {
+        cell.removeTools();
+      }
+    });
+  }
 
-  // 鼠标移除边 隐藏删除按钮以及二分按钮
-  graph.on("edge:mouseleave", (data: any) => {
-    const { cell } = data;
-    if (cell.hasTools("onhover")) {
-      cell.removeTools();
-    }
-  });
 
+  // 非边元素开启鼠标双击编辑文本 
   graph.on("cell:dblclick", (data: any) => {
     const { cell, e } = data;
-    const p = graph.clientToGraph(e.clientX, e.clientY);
-    cell.addTools([
-      {
-        name: "editableCell",
-        args: {
-          x: p.x,
-          y: p.y,
+    if (!Object.keys(data).includes('edge')) {
+      const p = graph.clientToGraph(e.clientX, e.clientY);
+      cell.addTools([
+        {
+          name: "editableCell",
+          args: {
+            x: p.x,
+            y: p.y,
+          },
         },
-      },
-    ]);
+      ]);
+    }
+
   });
 
   const showPorts = (ports: NodeListOf<SVGElement>, show: boolean) => {
@@ -924,19 +1046,24 @@ const initializeMouseEvent = (graph: any) => {
     ) as NodeListOf<SVGElement>;
     showPorts(ports, false);
   });
+
 };
 
 // 渲染画布
-export const getX6Render = () => {
+export const getX6Render = (isPreview?: boolean) => {
   // 创建画布
-  const graph: any = initializeX6Graph();
+  const graph: any = initializeX6Graph(isPreview);
+
+  // 创建公共元件连线桩
+  const ports = commonPorts();
 
   // 创建左侧工具栏/元件库
-  const stencil: any = initializeStencil(graph);
+  const stencil: any = initializeStencil(graph, ports);
 
   if (stencil) {
-    // 创建公共元件连线桩
-    const ports = commonPorts();
+
+    // 注册特殊元件(html元件)
+    registerComponent(ports)
 
     // 创建以及注册我的元件
     createMyselfComponent(ports, graph, stencil);
@@ -949,7 +1076,6 @@ export const getX6Render = () => {
   }
 
   // 初始化鼠标/键盘事件
-  initializeMouseEvent(graph);
-
-  return graph;
+  initializeMouseEvent(graph, isPreview);
+  return { graph, stencil };
 };

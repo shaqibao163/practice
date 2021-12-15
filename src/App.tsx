@@ -155,10 +155,15 @@ export default class App extends Component<any, IState> {
 
   // 初始化
   initializeView = () => {
-    const graph = getX6Render()
+    const { graph, stencil } = getX6Render()
+    // graph.drawBackground({
+    //   color: 'red',
+    // })
     graph.on('cell:click', (e: any) => {
       const { cell } = e
       const { data, attrs, shape } = cell.toJSON()
+
+      window.console.log(cell.toJSON())
 
       // const { current } = this.formRef
       // current.setFieldsValue(data)
@@ -208,19 +213,26 @@ export default class App extends Component<any, IState> {
       graphData,
       isPreview: true
     }, () => {
-      graphView?.dispose()
-      const { graphData } = this.state
-      window.console.log(document.getElementById('preview-container'))
-      // const container: any = document.getElementById('preview-container')
+      // window.console.log(graphView)
+      // graphView?.dispose()
+      // const { graphData } = this.state
       // const graph = new Graph({
-      //   container,
+      //   width: 400,
+      //   height: 400,
+      //   // container,
       //   grid: true,
       //   interacting: {
       //     nodeMovable: false
       //   },
       // });
-      const graph = getX6Render()
-      // graph.fromJSON(graphData);
+
+     
+
+      const { graph } = getX6Render(true)
+      graph.disableSelection()
+      graph.disableSelectionMovable()
+      graph.disableRubberband()
+      graph.fromJSON(graphData);
 
 
       // graph.on('cell:click', (e) => {
@@ -285,9 +297,12 @@ export default class App extends Component<any, IState> {
       </div>
       <div id='container-main'>
         {!isPreview ? <>
-          <div id='stencil' />
-          <div id='graph-container' />
-        </> : <div id='preview-container'></div>}
+          <div id='stencil'>
+            <Button className='edit'>编辑</Button>
+          </div>
+
+        </> : ''}
+        <div id='graph-container' />
         <div id='action'>
           <div className='form'>
             <Form
@@ -319,7 +334,6 @@ export default class App extends Component<any, IState> {
           </div>
         </div>
       </div>
-
     </div>
   }
 }

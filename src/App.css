@@ -30,6 +30,13 @@
   width: 280px;
   height: 100%;
 }
+
+.edit {
+  right: 0;
+  position: absolute;
+  z-index: 999;
+}
+
 .x6-widget-stencil {
   width: 280px;
   height: 100%;
@@ -63,4 +70,40 @@
 #action {
   width: 280px;
   height: 100%;
+}
+
+.html-node-table {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.html-node-table .table-row {
+  flex: 1;
+  display: flex;
+  flex-flow: row nowrap;
+}
+
+.html-node-table .table-row .table-column {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid gray;
+  margin-left: -1px;
+  margin-top: -1px;
+}
+
+.html-node-img {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.html-node-img img {
+  width: 100%;
 }
