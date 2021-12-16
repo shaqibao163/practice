@@ -4,10 +4,10 @@
  * @Author: bclz
  * @Date: 2021-12-10 09:05:24
  * @LastEditors: bclz
- * @LastEditTime: 2021-12-15 17:55:18
+ * @LastEditTime: 2021-12-16 18:01:27
  */
 
-import { Graph, Shape, Addon, ToolsView, Point, EdgeView } from "@antv/x6";
+import { Graph, Shape, Addon, ToolsView, Point, EdgeView, Color } from "@antv/x6";
 import moment from "moment";
 import coolFan from "../images/cool-fan.gif";
 import textIcon from "../images/icon_text_default@2x.png";
@@ -17,6 +17,8 @@ import tabelIcon from '../images/icon_table_default@2x.png'
 import pipelineCross from "../images/pipeline-cross.svg"; // 交叉管道
 import pipelineRevolve from "../images/pipeline-revolve.svg"; // 旋转管道
 import pipelineTransverse from "../images/pipeline-transverse.svg"; // 横向管道
+
+import sectorIcon from '../images/sector.svg'
 
 // 注册文本编辑元件
 class EditableCellTool extends ToolsView.ToolItem<
@@ -226,7 +228,7 @@ const initializeStencil = (graph: any, ports: any) => {
       title: "流程图",
       target: graph,
       stencilGraphWidth: 280,
-      stencilGraphHeight: 250,
+      stencilGraphHeight: 400,
       collapsable: true,
       getDropNode: (sourceNode: any) => {
         const { data } = sourceNode.toJSON();
@@ -355,6 +357,28 @@ const initializeStencil = (graph: any, ports: any) => {
             },
           })
         }
+
+        if (type === 'virtualsectorNode') {
+          return graph.createNode({
+            width: 100,
+            height: 100,
+            shape: 'html',
+            inherit: "circle",
+            data: {
+              typeName: "多边形",
+              type: "virtualsectorNode",
+              name: "扇形",
+              custom: {
+                row: 3,
+                column: 3,
+              },
+              time: new Date().toString(),
+            },
+            html: 'html-sector',
+            ports: { ...ports },
+          })
+        }
+
         return sourceNode.clone();
       },
       groups: [
@@ -497,7 +521,7 @@ const registerComponent = (ports: any) => {
     )
   })
 
-  // 注册自定义元件 表格
+  // 注册自定义元件
   Graph.registerHTMLComponent('html-img', (node) => {
     const { custom } = node.getData()
     const { url, title } = custom
@@ -505,6 +529,21 @@ const registerComponent = (ports: any) => {
       `<div class="html-node-img">
       <img src='${url}' />
       <span>${title}</span>
+    </div>`
+    )
+  })
+
+
+  // 注册自定义元件 扇形
+  Graph.registerHTMLComponent('html-sector', (node) => {
+    const { custom } = node.getData()
+    window.console.log(node.getProp('width'))
+    const { url, title } = custom
+    return (
+      `<div class="html-node-sector">
+      <svg width='100%' height='100%'>
+      <circle r="50%" cx="50%" cy="50%" class="c1" fill="#655" stroke="orange" />
+  </svg>
     </div>`
     )
   })
@@ -811,6 +850,114 @@ const createSysComponent = (ports: any, graph: any, stencil: any) => {
     ports: { ...ports },
   })
 
+  // 创建星形元件
+  const starNode = graph.createNode({
+    shape: 'polygon',
+    width: 60,
+    height: 60,
+    points: '100,10 40,198 190,78 10,78 160,198',
+    data: {
+      typeName: "星形",
+      type: "polygonNode",
+      name: "星形",
+    },
+    attrs: {
+      body: {
+        fill: '#ffd591',
+        stroke: 'red',
+        strokeWidth: 2,
+        fillRule: 'nonzero',
+      },
+    },
+  })
+
+  // 创建椭圆元件
+  const ellipticalNode = graph.createNode({
+    shape: 'ellipse',
+    width: 60,
+    height: 40,
+    label: 'ellipse',
+    attrs: {
+      body: {
+        stroke: '#ffa940',
+        fill: '#ffd591',
+      },
+    },
+    data: {
+      typeName: "多边形",
+      type: "polygonNode",
+      name: "椭圆",
+    },
+  })
+
+  // 创建圆柱
+  const cylinderNode = graph.createNode({
+    shape: 'cylinder',
+    width: 40,
+    height: 60,
+    label: '',
+    data: {
+      typeName: "多边形",
+      type: "polygonNode",
+      name: "圆柱",
+    },
+    attrs: {
+      top: {
+        fill: 'red',
+        fillOpacity: 0.5,
+      },
+      body: {
+        fill: '#ED8A19',
+        fillOpacity: 0.8,
+      },
+    },
+  })
+
+
+  // 创建虚拟扇形元件
+  const virtualsectorNode = graph.createNode({
+    width: 52,
+    height: 80,
+    shape: 'html',
+    data: {
+      typeName: "图片",
+      type: "virtualsectorNode",
+      name: "扇形",
+      custom: {
+        url: coolFan,
+        title: '扇形'
+      },
+      time: new Date().toString(),
+    },
+    html: 'html-img',
+    ports: { ...ports },
+  })
+
+
+  const sectorNode = graph.createNode({
+    shape: "custom-circle",
+    attrs: {
+      body: {
+        strokeWidth: 1,
+        stroke: "#5F95FF",
+        fill: "#EFF4FF",
+      },
+      text: {
+        fontSize: 12,
+        fill: "#262626",
+        style: { display: "" },
+        textWrap: {
+          text: "",
+        },
+      },
+    },
+    data: {
+      typeName: "多边形",
+      type: "polygonNode",
+      name: "圆形",
+    },
+  });
+
   stencil.load(
     [
       virtualTextNode,
@@ -821,7 +968,12 @@ const createSysComponent = (ports: any, graph: any, stencil: any) => {
       circleNode,
       lineNode,
       virtualTableNode,
-      virtualImgNode
+      virtualImgNode,
+      starNode,
+      ellipticalNode,
+      cylinderNode,
+      // virtualsectorNode,
+      sectorNode
     ],
     "group1"
   );

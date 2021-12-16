@@ -6,6 +6,7 @@ import { Graph } from '@antv/x6'
 // import graphData from './mock/appData'
 import './App.css';
 import { getX6Render } from './components/x6';
+import moment from 'moment';
 
 interface IState {
   currentCell: any
@@ -164,7 +165,6 @@ export default class App extends Component<any, IState> {
       const { data, attrs, shape } = cell.toJSON()
 
       window.console.log(cell.toJSON())
-
       // const { current } = this.formRef
       // current.setFieldsValue(data)
 
@@ -194,6 +194,10 @@ export default class App extends Component<any, IState> {
       //   graph.fromJSON({ cells: data });
 
       // }
+    })
+
+    graph.on('node:resize',(e:any)=>{
+      window.console.log(e)
     })
 
     graph.on('blank:click', (e: any) => {
@@ -226,12 +230,9 @@ export default class App extends Component<any, IState> {
       //   },
       // });
 
-     
+
 
       const { graph } = getX6Render(true)
-      graph.disableSelection()
-      graph.disableSelectionMovable()
-      graph.disableRubberband()
       graph.fromJSON(graphData);
 
 

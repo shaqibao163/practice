@@ -107,3 +107,20 @@
 .html-node-img img {
   width: 100%;
 }
+
+.html-node-sector {
+  width: 100%;
+  height: 100%;
+}
+
+.html-node-sector svg {
+  display: inline-block;
+  border-radius: 50%;
+  transform: rotate(-90deg);
+}
+.html-node-sector circle {
+  stroke-width: 100;
+}
+.html-node-sector .c1 {
+  stroke-dasharray: 30 314;
+}
